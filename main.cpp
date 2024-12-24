@@ -121,8 +121,23 @@ void find_duplicates(const std::vector<fs::path>& directories, const std::vector
         }
         std::cout << std::endl; // Разделяем группы дубликатов пустой строкой
     }
-
+    
+     /*// Вывод результатов
+    if (hashMap.empty()) {
+        std::cout << "Дубликаты не найдены.\n";
+    } else {
+        std::cout << "Найденные дубликаты:\n";
+        for (const auto& pair : hashMap) {
+            std::cout << "Группа дубликатов:\n";
+            for (const auto& file : pair.second) {
+                std::cout << file << std::endl; // Выводим путь к файлу
+            }
+            std::cout << std::endl; // Разделяем группы дубликатов пустой строкой
+        }
    
+}
+*/
+
 }
 
 int main() { // Начало функции main, точки входа в программу
