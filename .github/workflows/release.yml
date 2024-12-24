@@ -1,0 +1,82 @@
+name: 'C++ CI'
+
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  build_macos:
+    runs-on: macos-latest
+    permissions: write-all
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    # Устанавливаем boost с помощью Homebrew
+    - run: brew install boost
+    - run: cmake . -DPATCH_VERSION=${{ github.run_number }} -DCMAKE_INSTALL_PREFIX=`pwd`/install
+    - run: cmake --build . --target install # Install first
+    # Создаем пакет
+    - run: cmake --build . --target package
+    - run: cpack -G ZIP # Explicitly specify ZIP generator
+    - name: Run Tests
+      run: |
+        ctest --output-on-failure || exit 1
+    - name: Create Release (MacOS)
+      id: create_release_macos
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.run_number }}
+        release_name: Release ${{ github.run_number }} (MacOS)
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset (MacOS)
+      id: upload-release-asset-macos
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release_macos.outputs.upload_url }}
+        asset_path: ./lab7-0.0.${{ github.run_number }}-Darwin.zip #Path changed
+        asset_name: lab7-0.0.${{ github.run_number }}-Darwin.zip
+        asset_content_type: application/zip
+  
+  build_ubuntu:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install Boost
+        run: |
+          sudo apt update
+          sudo apt install libboost-all-dev -y # Установка всех компонентов Boost
+      - run: cmake . -DPATCH_VERSION=${{ github.run_number }} -DCMAKE_INSTALL_PREFIX=`pwd`/install
+      - run: cmake --build .
+      - run: cmake --build . --target package
+      - name: List files (ubuntu)
+        run: ls
+      - name: Create Release (ubuntu)
+        id: create_release_ubuntu
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ubuntu${{ github.run_number }}
+          release_name: Release ${{ github.run_number }} (ubuntu)
+          draft: false
+          prerelease: false 
+      - name: Upload Release Asset (ubuntu)
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release_ubuntu.outputs.upload_url }}
+          asset_path: ./lab7-0.0.${{ github.run_number }}-Linux.zip
+          asset_name: lab7-0.0.${{ github.run_number }}-Linux.zip
+          asset_content_type: application/zip
